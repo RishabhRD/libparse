@@ -77,10 +77,11 @@ constexpr auto fmap(F &&f, P &&p) noexcept {
   using R = parsed_t<std::invoke_result_t<F, parser_value_t<P>>>;
   return [p = std::forward<P>(p), f = std::forward<F>(f)](
            std::string_view str) -> R {
-    auto opt_i_res = p(str);
+    auto opt_i_res = std::invoke(std::forward<decltype(p)>(p), str);
     if (opt_i_res == std::nullopt) return std::nullopt;
     return std::make_pair(
-      std::invoke(f, std::move(opt_i_res->first)), opt_i_res->second);
+      std::invoke(std::forward<decltype(f)>(f), std::move(opt_i_res->first)),
+      opt_i_res->second);
   };
 }
 
@@ -90,9 +91,9 @@ requires(std::same_as<parser_result_t<P1>, parser_result_t<P2>>) constexpr auto
   using R = parser_result_t<P1>;
   return [p1 = std::forward<P1>(p1), p2 = std::forward<P2>(p2)](
            std::string_view str) -> R {
-    auto opt_i_res = std::invoke(p1, str);
+    auto opt_i_res = std::invoke(std::forward<decltype(p1)>(p1), str);
     if (opt_i_res) return *opt_i_res;
-    return std::invoke(p2, str);
+    return std::invoke(std::forward<decltype(p2)>(p2), str);
   };
 }
 
