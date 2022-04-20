@@ -87,7 +87,7 @@ constexpr auto fmap(F &&f, P &&p) noexcept {
 
 template<Parser P1, Parser P2>
 requires(std::same_as<parser_result_t<P1>, parser_result_t<P2>>) constexpr auto
-  operator|(P1 &&p1, P2 &&p2) {
+  operator|(P1 &&p1, P2 &&p2) noexcept {
   using R = parser_result_t<P1>;
   return [p1 = std::forward<P1>(p1), p2 = std::forward<P2>(p2)](
            std::string_view str) -> R {
@@ -96,5 +96,38 @@ requires(std::same_as<parser_result_t<P1>, parser_result_t<P2>>) constexpr auto
     return std::invoke(std::forward<decltype(p2)>(p2), str);
   };
 }
+
+template<Parser P1,
+  Parser P2,
+  std::regular_invocable<parser_value_t<P1>, parser_value_t<P2>> F>
+constexpr auto combine(P1 &&p1, P2 &&p2, F &&f) noexcept {
+  using R =
+    parsed_t<std::invoke_result_t<F, parser_value_t<P1>, parser_value_t<P2>>>;
+  return [p1 = std::forward<P1>(p1),
+           p2 = std::forward<P2>(p2),
+           f = std::forward<F>(f)](std::string_view str) -> R {
+    auto opt_i_res = std::invoke(std::forward<decltype(p1)>(p1), str);
+    if (!opt_i_res) return {};
+    auto opt_res =
+      std::invoke(std::forward<decltype(p2)>(p2), opt_i_res->second);
+    if (!opt_res) return {};
+    return std::make_pair(
+      std::invoke(f, std::move(opt_i_res->first), std::move(opt_res->first)),
+      opt_res->second);
+  };
+}
+
+template<Parser P1, Parser P2>
+constexpr auto operator<(P1 &&p1, P2 &&p2) noexcept {
+  return combine(
+    std::forward<P1>(p1), std::forward<P2>(p2), [](auto, auto r) { return r; });
+}
+
+template<Parser P1, Parser P2>
+constexpr auto operator>(P1 &&p1, P2 &&p2) noexcept {
+  return combine(
+    std::forward<P1>(p1), std::forward<P2>(p2), [](auto r, auto) { return r; });
+}
+
 
 };// namespace prs
