@@ -3,6 +3,7 @@
 #include <optional>
 #include <string_view>
 #include <algorithm>
+#include <utility>
 
 namespace prs {
 template<typename T>
@@ -64,6 +65,21 @@ constexpr auto str(std::string_view sv) noexcept {
       std::mismatch(cbegin(sv), cend(sv), cbegin(str), cend(str));
     if (sv_itr != cend(sv)) { return {}; }
     return std::make_pair(sv, str.substr(sv.size()));
+  };
+}
+
+template<typename T> constexpr auto fail() noexcept {
+  return [](std::string_view) -> parsed_t<T> { return {}; };
+}
+
+template<Parser P, std::regular_invocable<parser_value_t<P>> F>
+constexpr auto fmap(F &&f, P &&p) noexcept {
+  using R = parsed_t<std::invoke_result_t<F, parser_value_t<P>>>;
+  return [p = std::forward<P>(p), f = std::forward<F>(f)](
+           std::string_view str) -> R {
+    auto opt_i_res = p(str);
+    if (opt_i_res == std::nullopt) return std::nullopt;
+    return std::make_pair(std::invoke(f, opt_i_res->first), opt_i_res->second);
   };
 }
 
