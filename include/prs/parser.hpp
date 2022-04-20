@@ -79,7 +79,20 @@ constexpr auto fmap(F &&f, P &&p) noexcept {
            std::string_view str) -> R {
     auto opt_i_res = p(str);
     if (opt_i_res == std::nullopt) return std::nullopt;
-    return std::make_pair(std::invoke(f, opt_i_res->first), opt_i_res->second);
+    return std::make_pair(
+      std::invoke(f, std::move(opt_i_res->first)), opt_i_res->second);
+  };
+}
+
+template<Parser P1, Parser P2>
+requires(std::same_as<parser_result_t<P1>, parser_result_t<P2>>) constexpr auto
+  operator|(P1 &&p1, P2 &&p2) {
+  using R = parser_result_t<P1>;
+  return [p1 = std::forward<P1>(p1), p2 = std::forward<P2>(p2)](
+           std::string_view str) -> R {
+    auto opt_i_res = std::invoke(p1, str);
+    if (opt_i_res) return *opt_i_res;
+    return std::invoke(p2, str);
   };
 }
 
