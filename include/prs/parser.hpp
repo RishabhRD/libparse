@@ -30,32 +30,32 @@ concept ParserOf =
 constexpr auto item() noexcept {
   return [](std::string_view str) -> parsed_t<char> {
     if (std::empty(str)) return {};
-    return std::make_pair(str.front(), str.substr(1));
+    return std::make_pair(str[0], str.substr(1));
   };
 }
 
 constexpr auto ele(char c) noexcept {
   return [c](std::string_view str) -> parsed_t<char> {
-    if (std::empty(str) || str.front() != c) return {};
-    return std::make_pair(str.front(), str.substr(1));
+    if (std::empty(str) || str[0] != c) return {};
+    return std::make_pair(str[0], str.substr(1));
   };
 };
 
 constexpr auto one_of(std::string_view sv) noexcept {
   return [sv](std::string_view str) -> parsed_t<char> {
     if (std::empty(str)) return {};
-    const auto *const itr = std::find(cbegin(sv), cend(sv), str.front());
+    const auto *const itr = std::find(cbegin(sv), cend(sv), str[0]);
     if (itr == cend(sv)) return {};
-    return std::make_pair(str.front(), str.substr(1));
+    return std::make_pair(str[0], str.substr(1));
   };
 }
 
 constexpr auto none_of(std::string_view sv) noexcept {
   return [sv](std::string_view str) -> parsed_t<char> {
     if (std::empty(str)) return {};
-    const auto *const itr = std::find(cbegin(sv), cend(sv), str.front());
+    const auto *const itr = std::find(cbegin(sv), cend(sv), str[0]);
     if (itr != cend(sv)) return {};
-    return std::make_pair(str.front(), str.substr(1));
+    return std::make_pair(str[0], str.substr(1));
   };
 }
 
@@ -129,5 +129,18 @@ constexpr auto operator>(P1 &&p1, P2 &&p2) noexcept {
     std::forward<P1>(p1), std::forward<P2>(p2), [](auto r, auto) { return r; });
 }
 
+template<Parser P = decltype(item()),
+  std::predicate<parser_value_t<P>> Predicate>
+constexpr auto satisfy(Predicate &&pr, P &&p = item()) {
+  return [p = std::forward<P>(p), pr = std::forward<Predicate>(pr)](
+           std::string_view str) -> parser_result_t<P> {
+    if (auto res = std::invoke(std::forward<decltype(p)>(p), str)) {
+      if (std::invoke(std::forward<decltype(pr)>(pr), res->first)) {
+        return std::make_pair(std::move(res->first), res->second);
+      }
+    }
+    return {};
+  };
+}
 
 };// namespace prs
