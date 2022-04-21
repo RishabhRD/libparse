@@ -173,6 +173,23 @@ namespace detail {
     };
   }
 
+  // many: Parser a -> b -> (b -> a -> b) -> Parser b
+
+  template<Parser P, typename B, std::invocable<B, parser_value_t<P>> F>
+  requires(std::same_as<std::invoke_result_t<F, B, parser_value_t<P>>,
+    B>) constexpr auto
+    many(P && p, B b, F && f) {
+    return [p = std::forward<P>(p), b = std::move(b), f = std::forward<F>(f)](
+             std::string_view str) -> parsed_t<B> {
+      auto init = std::move(b);
+      while (auto res = p(str)) {
+        init = std::invoke(f, std::move(init), std::move(res->first));
+        str = res->second;
+      }
+      return std::make_pair(init, str);
+    };
+  }
+
 }// namespace detail
 
 template<typename F> constexpr auto piped(F &&f) noexcept {
@@ -269,6 +286,11 @@ constexpr auto then_with =
   piped([]<typename P1, typename P2, typename F>(P1 &&p1, P2 &&p2, F &&f) {
     return detail::then_with(
       std::forward<P1>(p1), std::forward<P2>(p2), std::forward<F>(f));
+  });
+
+constexpr auto many =
+  piped([]<typename P, typename B, typename F>(P &&p, B b, F &&f) {
+    return detail::many(std::forward<P>(p), std::move(b), std::forward<F>(f));
   });
 
 
