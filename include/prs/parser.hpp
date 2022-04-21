@@ -117,17 +117,18 @@ template<typename T> constexpr auto fail() noexcept {
   return [](std::string_view) -> parsed_t<T> { return {}; };
 }
 
-template<Parser P, std::regular_invocable<parser_value_t<P>> F>
-constexpr auto fmap(F &&f, P &&p) noexcept {
-  using R = parsed_t<std::invoke_result_t<F, parser_value_t<P>>>;
-  return [p = std::forward<P>(p), f = std::forward<F>(f)](
-           std::string_view str) -> R {
-    auto opt_i_res = std::invoke(p, str);
-    if (opt_i_res == std::nullopt) return std::nullopt;
-    return std::make_pair(
-      std::invoke(f, std::move(opt_i_res->first)), opt_i_res->second);
-  };
-}
+constexpr auto transform =
+  piped([]<Parser P, std::regular_invocable<parser_value_t<P>> F>(P &&p,
+          F &&f) noexcept {
+    using R = parsed_t<std::invoke_result_t<F, parser_value_t<P>>>;
+    return [p = std::forward<P>(p), f = std::forward<F>(f)](
+             std::string_view str) -> R {
+      auto opt_i_res = std::invoke(p, str);
+      if (opt_i_res == std::nullopt) return std::nullopt;
+      return std::make_pair(
+        std::invoke(f, std::move(opt_i_res->first)), opt_i_res->second);
+    };
+  });
 
 constexpr auto or_with = piped([]<Parser P1, Parser P2> requires(
   std::same_as<parser_result_t<P1>, parser_result_t<P2>>)(P1 && p1,
