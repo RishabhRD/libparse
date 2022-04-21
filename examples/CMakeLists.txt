@@ -1,0 +1,8 @@
+file(GLOB_RECURSE src_list "*.cpp")
+foreach(file ${src_list})
+  get_filename_component(filename ${file} NAME_WE)
+  add_executable(${filename} ${file})
+  target_include_directories(${filename} PRIVATE ../include)
+  target_link_libraries(${filename} PRIVATE project_warnings)
+  target_link_libraries(${filename} PRIVATE project_options)
+endforeach()
