@@ -174,20 +174,52 @@ namespace detail {
   }
 
   // many: Parser a -> b -> (b -> a -> b) -> Parser b
-
   template<Parser P, typename B, std::invocable<B, parser_value_t<P>> F>
   requires(std::same_as<std::invoke_result_t<F, B, parser_value_t<P>>,
     B>) constexpr auto
     many(P && p, B b, F && f) {
     return [p = std::forward<P>(p), b = std::move(b), f = std::forward<F>(f)](
              std::string_view str) -> parsed_t<B> {
-      auto init = std::move(b);
+      auto init = b;
       while (auto res = p(str)) {
         init = std::invoke(f, std::move(init), std::move(res->first));
         str = res->second;
       }
       return std::make_pair(init, str);
     };
+  }
+
+  // many1: Parser a -> b -> (b -> a -> b) -> Parser b
+  template<Parser P, typename B, std::invocable<B, parser_value_t<P>> F>
+  requires(std::same_as<std::invoke_result_t<F, B, parser_value_t<P>>,
+    B>) constexpr auto
+    many1(P && p, B b, F && f) {
+    return [p = std::forward<P>(p), b = std::move(b), f = std::forward<F>(f)](
+             std::string_view str) -> parsed_t<B> {
+      auto res = std::invoke(p, str);
+      if (!res) return {};
+      return many(p, std::invoke(f, b, std::move(res->first)), f)(res->second);
+    };
+  }
+
+  template<Parser P, typename B, std::invocable<B, parser_value_t<P>> F>
+  requires(std::same_as<std::invoke_result_t<F, B, parser_value_t<P>>,
+    B>) constexpr auto
+    exactly_n(P && p, B b, F && f, std::size_t n) {
+    return
+      [p = std::forward<P>(p), b = std::move(b), f = std::forward<F>(f), n](
+        std::string_view str) -> parsed_t<B> {
+        auto init = b;
+        for (size_t i{}; i < n; ++i) {
+          if (auto res = p(str)) {
+            init = std::invoke(f, std::move(init), std::move(res->first));
+            str = res->second;
+          } else {
+            return {};
+          }
+        }
+        return std::make_pair(init, str);
+      };
   }
 
 }// namespace detail
@@ -291,6 +323,17 @@ constexpr auto then_with =
 constexpr auto many =
   piped([]<typename P, typename B, typename F>(P &&p, B b, F &&f) {
     return detail::many(std::forward<P>(p), std::move(b), std::forward<F>(f));
+  });
+
+constexpr auto many1 =
+  piped([]<typename P, typename B, typename F>(P &&p, B b, F &&f) {
+    return detail::many1(std::forward<P>(p), std::move(b), std::forward<F>(f));
+  });
+
+constexpr auto exactly_n =
+  piped([]<typename P, typename B, typename F>(P &&p, B b, F &&f, size_t n) {
+    return detail::exactly_n(
+      std::forward<P>(p), std::move(b), std::forward<F>(f), n);
   });
 
 
