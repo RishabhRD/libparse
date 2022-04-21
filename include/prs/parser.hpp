@@ -122,11 +122,10 @@ constexpr auto fmap(F &&f, P &&p) noexcept {
   using R = parsed_t<std::invoke_result_t<F, parser_value_t<P>>>;
   return [p = std::forward<P>(p), f = std::forward<F>(f)](
            std::string_view str) -> R {
-    auto opt_i_res = std::invoke(std::forward<decltype(p)>(p), str);
+    auto opt_i_res = std::invoke(p, str);
     if (opt_i_res == std::nullopt) return std::nullopt;
     return std::make_pair(
-      std::invoke(std::forward<decltype(f)>(f), std::move(opt_i_res->first)),
-      opt_i_res->second);
+      std::invoke(f, std::move(opt_i_res->first)), opt_i_res->second);
   };
 }
 
@@ -136,9 +135,9 @@ constexpr auto or_with = piped([]<Parser P1, Parser P2> requires(
   using R = parser_result_t<P1>;
   return [p1 = std::forward<P1>(p1), p2 = std::forward<P2>(p2)](
            std::string_view str) -> R {
-    auto opt_i_res = std::invoke(std::forward<decltype(p1)>(p1), str);
+    auto opt_i_res = std::invoke(p1, str);
     if (opt_i_res) return *opt_i_res;
-    return std::invoke(std::forward<decltype(p2)>(p2), str);
+    return std::invoke(p2, str);
   };
 });
 
@@ -151,10 +150,9 @@ constexpr auto combine(P1 &&p1, P2 &&p2, F &&f) noexcept {
   return [p1 = std::forward<P1>(p1),
            p2 = std::forward<P2>(p2),
            f = std::forward<F>(f)](std::string_view str) -> R {
-    auto opt_i_res = std::invoke(std::forward<decltype(p1)>(p1), str);
+    auto opt_i_res = std::invoke(p1, str);
     if (!opt_i_res) return {};
-    auto opt_res =
-      std::invoke(std::forward<decltype(p2)>(p2), opt_i_res->second);
+    auto opt_res = std::invoke(p2, opt_i_res->second);
     if (!opt_res) return {};
     return std::make_pair(
       std::invoke(f, std::move(opt_i_res->first), std::move(opt_res->first)),
@@ -179,8 +177,8 @@ template<Parser P = decltype(item()),
 constexpr auto satisfy(Predicate &&pr, P &&p = item()) {
   return [p = std::forward<P>(p), pr = std::forward<Predicate>(pr)](
            std::string_view str) -> parser_result_t<P> {
-    if (auto res = std::invoke(std::forward<decltype(p)>(p), str)) {
-      if (std::invoke(std::forward<decltype(pr)>(pr), res->first)) {
+    if (auto res = std::invoke(p, str)) {
+      if (std::invoke(pr, res->first)) {
         return std::make_pair(std::move(res->first), res->second);
       }
     }
