@@ -27,6 +27,51 @@ template<typename ParserFunc, typename T>
 concept ParserOf =
   Parser<ParserFunc> && std::same_as<parser_value_t<ParserFunc>, T>;
 
+namespace detail::pipes {
+
+  template<typename F> struct pipe_adapter {
+    F f;
+
+  public:
+    template<typename Arg> constexpr auto operator()(Arg &&arg) const {
+      return std::invoke(f, std::forward<Arg>(arg));
+    }
+  };
+
+  template<typename F> constexpr auto make_pipe_adapter(F && f) {
+    return pipe_adapter<F>{ std::forward<F>(f) };
+  }
+
+  template<typename Arg, typename F>
+  constexpr auto operator|(Arg &&arg, pipe_adapter<F> const &p) {
+    return p(std::forward<Arg>(arg));
+  }
+
+  template<typename F> struct pipeable {
+  private:
+    F f;
+
+  public:
+    constexpr explicit pipeable(F &&f_p) noexcept : f(std::forward<F>(f_p)) {}
+
+    template<typename... Xs>
+    requires std::invocable<F, Xs...>
+    constexpr auto operator()(Xs &&...xs) const {
+      return std::invoke(f, std::forward<Xs>(xs)...);
+    }
+
+    template<typename... Xs> constexpr auto operator()(Xs &&...xs) const {
+      return make_pipe_adapter(
+        std::bind(f, std::placeholders::_1, std::forward<Xs>(xs)...));
+    }
+  };
+
+}// namespace detail::pipes
+
+template<typename F> constexpr auto piped(F &&f) noexcept {
+  return detail::pipes::pipeable<F>{ std::forward<F>(f) };
+}
+
 constexpr auto item() noexcept {
   return [](std::string_view str) -> parsed_t<char> {
     if (std::empty(str)) return {};
