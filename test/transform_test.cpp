@@ -3,7 +3,7 @@
 constexpr auto to_dig(char c) -> int { return c - '0'; }
 
 TEST_CASE("failing parser mapping") {
-  constexpr auto parser = parser::fail<char>()//
+  constexpr auto parser = parser::empty<char>//
                           | parser::transform(to_dig);
   static_assert(parser("123") == std::nullopt);
 };

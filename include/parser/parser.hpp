@@ -179,14 +179,12 @@ template<typename F> constexpr auto piped(F &&f) noexcept {
   return detail::pipes::pipeable<F>{ std::forward<F>(f) };
 }
 
-constexpr auto item() noexcept {
-  return [](std::string_view str) -> parsed_t<char> {
-    if (std::empty(str)) return {};
-    return std::make_pair(str[0], str.substr(1));
-  };
-}
+constexpr auto any = [](std::string_view str) -> parsed_t<char> {
+  if (std::empty(str)) return {};
+  return std::make_pair(str[0], str.substr(1));
+};
 
-constexpr auto ele(char c) noexcept {
+constexpr auto symbol(char c) noexcept {
   return [c](std::string_view str) -> parsed_t<char> {
     if (std::empty(str) || str[0] != c) return {};
     return std::make_pair(str[0], str.substr(1));
@@ -220,8 +218,13 @@ constexpr auto str(std::string_view sv) noexcept {
   };
 }
 
-template<typename T> constexpr auto fail() noexcept {
-  return [](std::string_view) -> parsed_t<T> { return {}; };
+template<typename T>
+constexpr auto empty = [](std::string_view) -> parsed_t<T> { return {}; };
+
+template<typename T> constexpr auto always(T val) {
+  return [val = std::move(val)](std::string_view str) -> parsed_t<T> {
+    return std::make_pair(val, str);
+  };
 }
 
 constexpr auto transform = piped([]<typename P1, typename F>(P1 &&p1, F &&f) {
@@ -255,7 +258,7 @@ constexpr auto if_satisfies =
   });
 
 template<typename F> constexpr auto if_char_satisfies(F &&f) {
-  return if_satisfies(item(), std::forward<F>(f));
+  return if_satisfies(any, std::forward<F>(f));
 }
 
 constexpr auto then = piped([]<typename P1, typename F>(P1 &&p1, F &&f) {

@@ -2,8 +2,8 @@
 
 constexpr auto is_same_char(char a, char b) -> bool { return a == b; }
 
-constexpr auto c_parser = parser::ele('c');
-constexpr auto d_parser = parser::ele('d');
+constexpr auto c_parser = parser::symbol('c');
+constexpr auto d_parser = parser::symbol('d');
 constexpr auto cc_parser = c_parser//
                            | parser::combine_with(c_parser, is_same_char);
 constexpr auto cd_parser = c_parser//

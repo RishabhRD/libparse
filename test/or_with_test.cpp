@@ -1,8 +1,8 @@
 #include "test_include.hpp"
 
-constexpr auto a_parser = parser::ele('a');
-constexpr auto b_parser = parser::ele('b');
-constexpr auto c_parser = parser::ele('c');
+constexpr auto a_parser = parser::symbol('a');
+constexpr auto b_parser = parser::symbol('b');
+constexpr auto c_parser = parser::symbol('c');
 constexpr auto aa_parser = a_parser//
                            | parser::or_with(a_parser);
 constexpr auto ab_parser = a_parser//
