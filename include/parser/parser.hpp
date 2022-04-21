@@ -312,10 +312,14 @@ constexpr auto ignore_previous =
     return detail::ignore_previous(std::forward<P1>(p1), std::forward<P2>(p2));
   });
 
+constexpr auto snd = ignore_previous;
+
 constexpr auto ignore =
   piped([]<typename P1, typename P2>(P1 &&p1, P2 &&p2) noexcept {
     return detail::ignore(std::forward<P1>(p1), std::forward<P2>(p2));
   });
+
+constexpr auto fst = ignore;
 
 constexpr auto if_satisfies =
   piped([]<typename P1, typename F>(P1 &&p1, F &&f) {
