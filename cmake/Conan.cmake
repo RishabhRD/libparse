@@ -28,4 +28,5 @@ macro(run_conan)
 
   package(boost-ext-ut/1.1.8)
   package(sfml/2.5.1)
+  package(doctest/2.4.8)
 endmacro()

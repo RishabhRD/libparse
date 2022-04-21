@@ -38,13 +38,13 @@ namespace detail::pipes {
     }
   };
 
-  template<typename F> constexpr auto make_pipe_adapter(F && f) {
-    return pipe_adapter<F>{ std::forward<F>(f) };
-  }
-
   template<typename Arg, typename F>
   constexpr auto operator|(Arg &&arg, pipe_adapter<F> const &p) {
     return p(std::forward<Arg>(arg));
+  }
+
+  template<typename F> constexpr auto make_pipe_adapter(F && f) {
+    return pipe_adapter<F>{ std::forward<F>(f) };
   }
 
   template<typename F> struct pipeable {
@@ -130,9 +130,9 @@ constexpr auto fmap(F &&f, P &&p) noexcept {
   };
 }
 
-template<Parser P1, Parser P2>
-requires(std::same_as<parser_result_t<P1>, parser_result_t<P2>>) constexpr auto
-  operator|(P1 &&p1, P2 &&p2) noexcept {
+constexpr auto or_with = piped([]<Parser P1, Parser P2> requires(
+  std::same_as<parser_result_t<P1>, parser_result_t<P2>>)(P1 && p1,
+  P2 &&p2) noexcept {
   using R = parser_result_t<P1>;
   return [p1 = std::forward<P1>(p1), p2 = std::forward<P2>(p2)](
            std::string_view str) -> R {
@@ -140,7 +140,7 @@ requires(std::same_as<parser_result_t<P1>, parser_result_t<P2>>) constexpr auto
     if (opt_i_res) return *opt_i_res;
     return std::invoke(std::forward<decltype(p2)>(p2), str);
   };
-}
+});
 
 template<Parser P1,
   Parser P2,

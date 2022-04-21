@@ -1,5 +1,4 @@
-#include <boost/ut.hpp>
+#include <doctest/doctest.h>
 #include "prs/parser.hpp"
 
-using namespace boost::ut;
 using namespace std::string_view_literals;
