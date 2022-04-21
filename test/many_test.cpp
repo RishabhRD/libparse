@@ -4,7 +4,7 @@ constexpr auto concat_digits(int a, char b) -> int {
   return a = a * 10 + (b - '0');
 }
 
-auto concat_string(std::string res, char cur) -> std::string {
+auto concat_string_custom(std::string res, char cur) -> std::string {
   res += cur;
   return res;
 }
@@ -27,6 +27,6 @@ TEST_CASE("zero match") {
 
 TEST_CASE("move required parser") {
   auto const string_parser = parser::any//
-                             | parser::many(""s, concat_string);
+                             | parser::many(""s, concat_string_custom);
   REQUIRE(string_parser("abcdef") == std::pair{ "abcdef"s, ""sv });
 }
