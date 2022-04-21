@@ -127,6 +127,32 @@ namespace detail {
       [](auto r, auto) { return r; });
   }
 
+  template<Parser P, std::predicate<parser_value_t<P>> Predicate>
+  constexpr auto if_satisfies(P && p, Predicate && pr) {
+    return [p = std::forward<P>(p), pr = std::forward<Predicate>(pr)](
+             std::string_view str) -> parser_result_t<P> {
+      if (auto res = std::invoke(p, str)) {
+        if (std::invoke(pr, res->first)) {
+          return std::make_pair(std::move(res->first), res->second);
+        }
+      }
+      return {};
+    };
+  }
+
+  template<Parser P, std::regular_invocable<parser_value_t<P>> F>
+  requires(Parser<std::invoke_result_t<F, parser_value_t<P>>>) constexpr auto
+    then(P && p, F && f) {
+    using R = parser_result_t<std::invoke_result_t<F, parser_value_t<P>>>;
+    return [p = std::forward<P>(p), f = std::forward<F>(f)](
+             std::string_view str) -> R {
+      auto opt_i_res = std::invoke(p, str);
+      if (!opt_i_res) return {};
+      return std::invoke(
+        std::invoke(f, std::move(opt_i_res->first)), opt_i_res->second);
+    };
+  }
+
 }// namespace detail
 
 template<typename F> constexpr auto piped(F &&f) noexcept {
@@ -203,19 +229,18 @@ constexpr auto ignore =
     return detail::ignore(std::forward<P1>(p1), std::forward<P2>(p2));
   });
 
+constexpr auto if_satisfies =
+  piped([]<typename P1, typename F>(P1 &&p1, F &&f) {
+    return detail::if_satisfies(std::forward<P1>(p1), std::forward<F>(f));
+  });
 
-template<Parser P = decltype(item()),
-  std::predicate<parser_value_t<P>> Predicate>
-constexpr auto satisfy(Predicate &&pr, P &&p = item()) {
-  return [p = std::forward<P>(p), pr = std::forward<Predicate>(pr)](
-           std::string_view str) -> parser_result_t<P> {
-    if (auto res = std::invoke(p, str)) {
-      if (std::invoke(pr, res->first)) {
-        return std::make_pair(std::move(res->first), res->second);
-      }
-    }
-    return {};
-  };
+template<typename F> constexpr auto if_char_satisfies(F &&f) {
+  return if_satisfies(item(), std::forward<F>(f));
 }
+
+constexpr auto then = piped([]<typename P1, typename F>(P1 &&p1, F &&f) {
+  return detail::then(std::forward<P1>(p1), std::forward<F>(f));
+});
+
 
 };// namespace parser
