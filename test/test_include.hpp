@@ -1,4 +1,4 @@
 #include <doctest/doctest.h>
-#include "prs/parser.hpp"
+#include "parser/parser.hpp"
 
 using namespace std::string_view_literals;

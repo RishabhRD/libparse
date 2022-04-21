@@ -1,15 +1,15 @@
 #include "test_include.hpp"
 
-constexpr auto a_parser = prs::ele('a');
-constexpr auto b_parser = prs::ele('b');
-constexpr auto c_parser = prs::ele('c');
+constexpr auto a_parser = parser::ele('a');
+constexpr auto b_parser = parser::ele('b');
+constexpr auto c_parser = parser::ele('c');
 constexpr auto aa_parser = a_parser//
-                           | prs::or_with(a_parser);
+                           | parser::or_with(a_parser);
 constexpr auto ab_parser = a_parser//
-                           | prs::or_with(b_parser);
+                           | parser::or_with(b_parser);
 constexpr auto abc_parsr = a_parser//
-                           | prs::or_with(b_parser)//
-                           | prs::or_with(c_parser);
+                           | parser::or_with(b_parser)//
+                           | parser::or_with(c_parser);
 
 TEST_CASE("both fails") { static_assert(ab_parser("def") == std::nullopt); }
 
