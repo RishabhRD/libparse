@@ -222,6 +222,22 @@ namespace detail {
       };
   }
 
+  template<Parser P1, Parser P2, typename B, typename F>
+  requires(std::same_as<std::invoke_result_t<F, B, parser_value_t<P1>>,
+    B>) constexpr auto
+    seperated_by(P1 && p1, P2 && p2, B b, F && f) {
+    return [p1 = std::forward<P1>(p1),
+             p2 = std::forward<P2>(p2),
+             b = std::move(b),
+             f = std::forward<F>(f)](std::string_view str) -> parsed_t<B> {
+      auto res = std::invoke(p1, str);
+      if (!res) return {};
+      return many(ignore_previous(p2, p1),
+        std::invoke(f, b, std::move(res->first)),
+        f)(res->second);
+    };
+  }
+
 }// namespace detail
 
 template<typename F> constexpr auto piped(F &&f) noexcept {
@@ -336,5 +352,52 @@ constexpr auto exactly_n =
       std::forward<P>(p), std::move(b), std::forward<F>(f), n);
   });
 
+constexpr auto seperated_by =
+  piped([]<typename P1, typename P2, typename B, typename F>(P1 &&p1,
+          P2 &&p2,
+          B b,
+          F &&f) {
+    return detail::seperated_by(std::forward<P1>(p1),
+      std::forward<P2>(p2),
+      std::move(b),
+      std::forward<F>(f));
+  });
+
+constexpr auto many_of(char c) {
+  return [c](std::string_view str) {
+    using namespace std::string_view_literals;
+    return detail::many(symbol(c), ""sv, [str](auto prev, auto) {
+      return str.substr(0, prev.size() + 1);
+    })(str);
+  };
+}
+
+constexpr auto many1_of(char c) {
+  return [c](std::string_view str) {
+    using namespace std::string_view_literals;
+    return detail::many1(symbol(c), ""sv, [str](auto prev, auto) {
+      return str.substr(0, prev.size() + 1);
+    })(str);
+  };
+}
+
+template<std::predicate<char> Predicate>
+constexpr auto many1_if(Predicate &&p) {
+  return [p = std::forward<Predicate>(p)](std::string_view str) {
+    using namespace std::string_view_literals;
+    return detail::many1(if_char_satisfies(p), ""sv, [str](auto prev, auto) {
+      return str.substr(0, prev.size() + 1);
+    })(str);
+  };
+}
+
+template<std::predicate<char> Predicate> constexpr auto many_if(Predicate &&p) {
+  return [p = std::forward<Predicate>(p)](std::string_view str) {
+    using namespace std::string_view_literals;
+    return detail::many(if_char_satisfies(p), ""sv, [str](auto prev, auto) {
+      return str.substr(0, prev.size() + 1);
+    })(str);
+  };
+}
 
 };// namespace parser
