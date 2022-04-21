@@ -27,6 +27,5 @@ macro(run_conan)
     https://api.bintray.com/conan/bincrafters/public-conan)
 
   package(boost-ext-ut/1.1.8)
-  package(sfml/2.5.1)
   package(doctest/2.4.8)
 endmacro()

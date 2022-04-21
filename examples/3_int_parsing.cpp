@@ -11,7 +11,7 @@ constexpr auto add_int(int a, int b) { return a + b; }
 constexpr auto digit_parser = parser::one_of("01234567889")//
                               | parser::transform(to_digit);
 constexpr auto whitespace_parser = parser::symbol(' ');
-constexpr auto plus_parser = parser::symbol('+');
+constexpr auto plus_token_parser = parser::str(" + ");
 
 
 // parses string like <1 2 3> -> 123
@@ -22,16 +22,16 @@ constexpr auto three_dig_parser =
   | parser::ignore(whitespace_parser)
   | parser::then_with(digit_parser, concat_digit);
 
-// parse string like <1 + 2 + 3 > -> 6
-constexpr auto three_dig_sum = digit_parser//
-                               | parser::ignore(parser::str(" + "))//
+// parse string like < 1 + 2 + 3 > -> 6
+constexpr auto three_dig_sum = whitespace_parser
+                               | parser::ignore_previous(digit_parser)//
+                               | parser::ignore(plus_token_parser)//
                                | parser::then_with(digit_parser, add_int)//
-                               | parser::ignore(parser::str(" + "))//
+                               | parser::ignore(plus_token_parser)//
                                | parser::then_with(digit_parser, add_int)//
                                | parser::ignore(whitespace_parser);
 
-
 auto main() -> int {
   static_assert(three_dig_parser("3 6 1") == std::pair{ 361, ""sv });
-  static_assert(three_dig_sum("3 + 6 + 1 ").value().first == 10);
+  static_assert(three_dig_sum(" 3 + 6 + 1 ").value().first == 10);
 }

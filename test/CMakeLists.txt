@@ -1,5 +1,5 @@
 file(GLOB_RECURSE test_list "*_test.cpp")
-add_executable(libparse_tests ${src_list} ${test_list})
+add_executable(libparse_tests ${test_list})
 target_include_directories(libparse_tests PRIVATE ../include)
 target_link_libraries(libparse_tests PRIVATE project_warnings)
 target_link_libraries(libparse_tests PUBLIC CONAN_PKG::doctest)
