@@ -366,26 +366,7 @@ constexpr auto seperated_by =
 constexpr auto many_of(char c) {
   return [c](std::string_view str) {
     using namespace std::string_view_literals;
-    return detail::many(symbol(c), ""sv, [str](auto prev, auto) {
-      return str.substr(0, prev.size() + 1);
-    })(str);
-  };
-}
-
-constexpr auto many1_of(char c) {
-  return [c](std::string_view str) {
-    using namespace std::string_view_literals;
     return detail::many1(symbol(c), ""sv, [str](auto prev, auto) {
-      return str.substr(0, prev.size() + 1);
-    })(str);
-  };
-}
-
-template<std::predicate<char> Predicate>
-constexpr auto many1_if(Predicate &&p) {
-  return [p = std::forward<Predicate>(p)](std::string_view str) {
-    using namespace std::string_view_literals;
-    return detail::many1(if_char_satisfies(p), ""sv, [str](auto prev, auto) {
       return str.substr(0, prev.size() + 1);
     })(str);
   };
@@ -394,7 +375,7 @@ constexpr auto many1_if(Predicate &&p) {
 template<std::predicate<char> Predicate> constexpr auto many_if(Predicate &&p) {
   return [p = std::forward<Predicate>(p)](std::string_view str) {
     using namespace std::string_view_literals;
-    return detail::many(if_char_satisfies(p), ""sv, [str](auto prev, auto) {
+    return detail::many1(if_char_satisfies(p), ""sv, [str](auto prev, auto) {
       return str.substr(0, prev.size() + 1);
     })(str);
   };
