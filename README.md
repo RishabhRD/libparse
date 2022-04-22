@@ -40,8 +40,9 @@ file well demostrates the functionality of that parser in code.
 using parsed_t<T> = std::optional<std::pair<T, std::string_view>>;
 ```
 
-A `ParserOf\<T\>` is an invocable that accepts a `string_view` and returns a
-`parsed_t<T>`.
+```haskell
+ParserOf<T> :: string_view -> parsed_t<T>
+```
 
 If parser returns null, that means parser was not able to parse starting of
 string with it. Otherwise, it returns a pair that contain the result of type T
@@ -50,10 +51,6 @@ and a string_view that is rest of string to parse.
 If a parser parses successfully, it consumes 0 or more characters from starting
 of string_view. Somehow, transforms that to T and returns the remaining
 characters.
-
-```haskell
-ParserOf<T> :: string_view -> parsed_t<T>
-```
 
 If parser fails to parse, it returns a std::nullopt.
 
