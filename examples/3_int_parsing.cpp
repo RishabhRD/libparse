@@ -18,17 +18,17 @@ constexpr auto plus_token_parser = parser::str(" + ");
 constexpr auto three_dig_parser =
   digit_parser//
   | parser::ignore(whitespace_parser)
-  | parser::then_with(digit_parser, concat_digit)
+  | parser::combine_with(digit_parser, concat_digit)
   | parser::ignore(whitespace_parser)
-  | parser::then_with(digit_parser, concat_digit);
+  | parser::combine_with(digit_parser, concat_digit);
 
 // parse string like < 1 + 2 + 3 > -> 6
 constexpr auto three_dig_sum = whitespace_parser
                                | parser::ignore_previous(digit_parser)//
                                | parser::ignore(plus_token_parser)//
-                               | parser::then_with(digit_parser, add_int)//
+                               | parser::combine_with(digit_parser, add_int)//
                                | parser::ignore(plus_token_parser)//
-                               | parser::then_with(digit_parser, add_int)//
+                               | parser::combine_with(digit_parser, add_int)//
                                | parser::ignore(whitespace_parser);
 
 auto main() -> int {

@@ -153,26 +153,6 @@ namespace detail {
     };
   }
 
-  template<Parser P1,
-    Parser P2,
-    std::regular_invocable<parser_value_t<P1>, parser_value_t<P2>> F>
-  constexpr auto then_with(P1 && p1, P2 && p2, F && f) {
-    using R =
-      parsed_t<std::invoke_result_t<F, parser_value_t<P1>, parser_value_t<P2>>>;
-    using p1_res_t = parser_value_t<P1>;
-    using p2_res_t = parser_value_t<P2>;
-    return [p1 = std::forward<P1>(p1),
-             p2 = std::forward<P2>(p2),
-             f = std::forward<F>(f)](std::string_view str) -> R {
-      auto then_func = [&f, &p2](p1_res_t p1_res) {
-        return transform(p2, [p1_res = std::move(p1_res), &f](p2_res_t p2_res) {
-          return std::invoke(f, std::move(p1_res), std::move(p2_res));
-        });
-      };
-      return then(p1, std::move(then_func))(str);
-    };
-  }
-
   // many: Parser a -> b -> (b -> a -> b) -> Parser b
   template<Parser P, typename B, std::invocable<B, parser_value_t<P>> F>
   requires(std::same_as<std::invoke_result_t<F, B, parser_value_t<P>>,
@@ -333,12 +313,6 @@ template<typename F> constexpr auto if_char_satisfies(F &&f) {
 constexpr auto then = piped([]<typename P1, typename F>(P1 &&p1, F &&f) {
   return detail::then(std::forward<P1>(p1), std::forward<F>(f));
 });
-
-constexpr auto then_with =
-  piped([]<typename P1, typename P2, typename F>(P1 &&p1, P2 &&p2, F &&f) {
-    return detail::then_with(
-      std::forward<P1>(p1), std::forward<P2>(p2), std::forward<F>(f));
-  });
 
 constexpr auto many =
   piped([]<typename P, typename B, typename F>(P &&p, B b, F &&f) {
