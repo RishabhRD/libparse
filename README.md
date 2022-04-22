@@ -30,7 +30,7 @@ int main(){
 }
 ```
 
-## Documentation
+# Documentation
 
 **NOTE**: For more examples please look into project's test files and examples directory.
 There is a test file for every parser and parser combinator. That test
@@ -63,7 +63,7 @@ callable with normal function call syntax with all arguments provided.
 
 This makes a parser to look like a pipeline of parsers.
 
-### parser::any
+## parser::any
 
 ```cpp
 any :: string_view -> parsed_t<char>
@@ -75,7 +75,7 @@ This parser parses first character of string_view and null if empty.
 static_assert(parser::any("test") == std::pair{ 't', "est"sv  });
 ```
 
-### parser::symbol
+## parser::symbol
 
 ```cpp
 symbol = (char c) -> (string_view -> parsed_t<char>)
@@ -87,7 +87,7 @@ This parser parses the first character of string_view if first character is c.
 static_assert(parser::symbol('t')("test") == std::pair{ 't', "est"sv  });
 ```
 
-### parser::one_of
+## parser::one_of
 
 ```cpp
 one_of = (string_view s) -> (string_view -> parsed_t<char>)
@@ -99,7 +99,7 @@ This parser parses the first character of string_view is contained in s.
 static_assert(parser::one_of("tuv")("test") == std::pair{ 't', "est"sv  });
 ```
 
-### parser::none_of
+## parser::none_of
 
 ```cpp
 none_of = (string_view s) -> ParserOf<Char>
@@ -111,7 +111,7 @@ This parser parses the first character of string_view is not contained in s.
 static_assert(parser::one_of("uv")("test") == std::pair{ 't', "est"sv  });
 ```
 
-### parser::str
+## parser::str
 
 ```cpp
 str = (string_view s) -> ParserOf<string_view>
@@ -123,7 +123,7 @@ This parser parses if the string starts with s
 static_assert(parser::one_of("te")("test") == std::pair{ "te"sv, "st"sv  });
 ```
 
-### parser::empty
+## parser::empty
 
 ```cpp
 empty<T> = (string_view s) -> parsed_t<T>
@@ -135,7 +135,7 @@ This parsers just returns null, and consumes nothing.
 static_assert(parser::empty<char>("str") == std::nulopt);
 ```
 
-### parser::always
+## parser::always
 
 ```cpp
 always = (T t) -> (string_view -> parsed_t<T>)
@@ -147,7 +147,7 @@ This parser always returns t and having the input string unconsumed
 static_assert(parser::always('c')("str") == std::pair{'c', "str"sv});
 ```
 
-### parser::transform
+## parser::transform
 
 ```cpp
 transform = (ParserOf<T1> p, F :: (T1 -> T2)) -> ParserOf<T2>
@@ -168,7 +168,7 @@ constexpr auto dig_9 = parser::symbol('9')
 static_assert(dig_9("9str") == std::pair{9, "str"sv});
 ```
 
-### parser::or_with
+## parser::or_with
 
 ```cpp
 or_with = (ParserOf<T> p1, ParserOf<T> p2) -> ParserOf<T>
@@ -185,7 +185,7 @@ constexpr auto any_char = parser::empty<char>
 static_assert(any_char("9str") == std::pair{'9', "str"sv});
 ```
 
-### parser::combine_with
+## parser::combine_with
 
 ```cpp
 or_with = (ParserOf<T1> p1, ParserOf<T2> p2, F f) -> ParserOf<F(T1, T2)>
@@ -207,7 +207,7 @@ constexpr auto two_dig = dig
 static_assert(two_dig("92str") == std::pair{92, "str"sv});
 ```
 
-### parser::ignore_previous / parser::snd
+## parser::ignore_previous / parser::snd
 
 ```cpp
 ignore_previous = (ParserOf<T1> p1, ParserOf<T2> p2) -> ParserOf<T2>
@@ -231,7 +231,7 @@ static_assert(dig_after_whitespace("   9a" == std::pair{9, "a"sv});
 static_assert(parser::snd(whitespace, dig_parser)("   9a" == std::pair{9, "a"sv});
 ```
 
-### parser::ignore / parser::fst
+## parser::ignore / parser::fst
 
 ```cpp
 ignore = (ParserOf<T1> p1, ParserOf<T2> p2) -> ParserOf<T1>
@@ -255,7 +255,7 @@ static_assert(whitspace_after_dig("9    a" == std::pair{9, "a"sv});
 static_assert(parser::fst(dig_parser, whitespace)("   9a" == std::pair{9, "a"sv});
 ```
 
-### parser::if_satisfies
+## parser::if_satisfies
 
 ```cpp
 if_satisfies = (ParserOf<T1> p1, Predicate p) -> ParserOf<T1>
@@ -276,7 +276,7 @@ constexpr auto c_or_d = parser::any
 static_assert(c_or_d("cat" == std::pair{'c', "at"sv});
 ```
 
-### parser::if_char_satisfies
+## parser::if_char_satisfies
 
 ```cpp
 if_char_satisfies = (Predicate p) -> ParserOf<T1>
@@ -294,7 +294,7 @@ constexpr auto c_or_d = parser::if_char_satisfies(is_c_or_d);
 static_assert(c_or_d("cat" == std::pair{'c', "at"sv});
 ```
 
-### parser::then
+## parser::then
 
 ```cpp
 then = (ParserOf<T> p, F f) -> ParserOf<F(T)>
@@ -322,7 +322,7 @@ constexpr auto int_parser =
 static_assert(int_parser("123abc") == std::pair{123, "abc"sv});
 ```
 
-### parser::many
+## parser::many
 
 ```cpp
 many = (ParserOf<T1> p1, T2 init, F<T2, T1> f) -> Parser<T2>
@@ -346,7 +346,7 @@ static_assert(int_parser("123abc") == std::pair{ 123, "abc"sv });
 static_assert(int_parser("abc") == std::pair{ 0, "abc"sv });
 ```
 
-### parser::many1
+## parser::many1
 
 ```cpp
 many1 = (ParserOf<T1> p1, T2 init, F<T2, T1> f) -> Parser<T2>
@@ -371,7 +371,7 @@ static_assert(int_parser("123abc") == std::pair{ 123, "abc"sv });
 static_assert(int_parser("abc") == std::nullopt);
 ```
 
-### parser::exactly_n
+## parser::exactly_n
 
 ```cpp
 exactly_n = (ParserOf<T1> p1, T2 init, F<T2, T1> f, size_t n) -> Parser<T2>
@@ -396,7 +396,7 @@ static_assert(int_parser("1234abc") == std::pair{ 123, "4abc"sv });
 static_assert(int_parser("12abc") == std::nullopt);
 ```
 
-### parser::seperated_by
+## parser::seperated_by
 
 ```cpp
 seperated_by = (ParserOf<T1> p1, ParserOf<T> p2, T2 init, F<T2, T1> f) -> Parser<T2>
@@ -421,7 +421,7 @@ constexpr auto sum_dig = digit_parser
 static_assert(sum_dig("1+2+3a") == std::pair{ 6, "a"sv });
 ```
 
-### parser::many_of
+## parser::many_of
 
 ```cpp
  many_of = (char c) -> Parser<string_view>
@@ -436,7 +436,7 @@ static_assert(many_of('c')("ccabc") == std::pair{ "cc"sv, "abc"sv });
 static_assert(many_of('c')("abc") == std::pair{ ""sv, "abc"sv });
 ```
 
-### parser::many_if
+## parser::many_if
 
 ```cpp
  many_of = (Predicate p) -> Parser<string_view>
@@ -456,7 +456,7 @@ static_assert(many_if(is_c)("ccabc") == std::pair{ "cc"sv, "abc"sv });
 static_assert(many_if(is_c)("abc") == std::pair{ ""sv, "abc"sv });
 ```
 
-### parser::many1_of
+## parser::many1_of
 
 ```cpp
  many1_of = (char c) -> Parser<string_view>
@@ -470,7 +470,7 @@ static_assert(many1_of('c')("ccabc") == std::pair{ "cc"sv, "abc"sv });
 static_assert(many1_of('c')("abc") == std::nullopt);
 ```
 
-### parser::many1_if
+## parser::many1_if
 
 ```cpp
  many1_if = (Predicate p) -> Parser<string_view>
