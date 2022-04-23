@@ -3,7 +3,7 @@
 A **single header** compile time functional string parsing libary in C++.
 It provides a set of builtin parsers and parser combinators.
 Parser combinators utilizes well known functional programming patterns.
-We can chain many parsers using parser combinators to define custom parsers you need.
+You can chain many parsers using parser combinators to define custom parsers you need.
 
 All you need is C++20!
 
@@ -21,9 +21,9 @@ constexpr auto plus_token_parser = parser::str(" + ");
 
 constexpr auto three_dig_sum = digit_parser
                                | parser::ignore(plus_token_parser)
-                               | parser::then_with(digit_parser, std::plus<>{})
+                               | parser::combine_with(digit_parser, std::plus<>{})
                                | parser::ignore(plus_token_parser)
-                               | parser::then_with(digit_parser, std::plus<>{});
+                               | parser::combine_with(digit_parser, std::plus<>{});
 
 int main(){
   static_assert(three_dig_sum("1 + 2 + 3")->first == 6);
@@ -500,3 +500,4 @@ static_assert(many1_if(is_c)("abc") == std::nullopt);
 -   David Sankel's talk: [Monoids, Monads and Applicative Functors](https://youtu.be/giWCdQ7fnQU)
 -   Ben Deane's talk: [constexpr all the things](https://youtu.be/PJwd4JLYJJY)
 -   Peter Holmberg's talk: [Functional Parsing in C++20](https://youtu.be/5iXKLwoqbyw)
+-   Prabhdeep Singh (@prabhdepSP) : [big_string_parsing.cpp](examples/big_string_parsing.cpp)
