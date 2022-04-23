@@ -44,15 +44,15 @@ using parsed_t<T> = std::optional<std::pair<T, std::string_view>>;
 ParserOf<T> :: string_view -> parsed_t<T>
 ```
 
-If parser returns null, that means parser was not able to parse starting of
-string with it. Otherwise, it returns a pair that contain the result of type T
-and a string_view that is rest of string to parse.
+A parser of thing is a function that takes string_view and optionally returns
+the thing and rest of string to parse.
+Parser parses 0 or more length prefix of string_view.
+
+If parser returns std::nullopt, that means parser was not able to parse the string.
 
 If a parser parses successfully, it consumes 0 or more characters from starting
-of string_view. Somehow, transforms that to T and returns the remaining
-characters.
-
-If parser fails to parse, it returns a std::nullopt.
+of string_view. Somehow, transforms that to T and returns T and the remaining
+characters of string_view to parse.
 
 A Parser combinator accepts one or more parsers and return a new parser.
 Every Parser combinator is both infix callable with pipes (pipeable) and
