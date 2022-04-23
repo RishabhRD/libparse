@@ -32,9 +32,9 @@ int main(){
 
 # Documentation
 
-**NOTE**: For more examples please look into project's test files and examples directory.
-There is a test file for every parser and parser combinator. That test
-file well demostrates the functionality of that parser in code.
+A parser of thing is a function that takes string_view and optionally returns
+the thing and rest of string to parse.
+Parser parses 0 or more length prefix of string_view.
 
 ```cpp
 using parsed_t<T> = std::optional<std::pair<T, std::string_view>>;
@@ -43,10 +43,6 @@ using parsed_t<T> = std::optional<std::pair<T, std::string_view>>;
 ```haskell
 ParserOf<T> :: string_view -> parsed_t<T>
 ```
-
-A parser of thing is a function that takes string_view and optionally returns
-the thing and rest of string to parse.
-Parser parses 0 or more length prefix of string_view.
 
 If parser returns std::nullopt, that means parser was not able to parse the string.
 
@@ -62,6 +58,10 @@ callable with normal function call syntax with all arguments provided.
     Infix: a | F(b)
 
 This makes a parser to look like a pipeline of parsers.
+
+**NOTE**: For more examples please look into project's test and examples directory.
+There is a test file for every parser and parser combinator. That test
+file well demostrates the functionality of that parser in code.
 
 ## parser::any
 
@@ -488,6 +488,12 @@ constexpr auto is_c(char c){
 static_assert(many1_if(is_c)("ccabc") == std::pair{ "cc"sv, "abc"sv });
 static_assert(many1_if(is_c)("abc") == std::nullopt);
 ```
+
+## What's next
+
+checkout [cycling_parsing.cpp](examples/cyclic_parsing.cpp) to understand
+how to parse a grammar with libparse and potentially if that grammer contains
+cyclic dependencies.
 
 ## TODO
 
