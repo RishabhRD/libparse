@@ -11,11 +11,10 @@ using parsed_t = std::optional<std::pair<T, std::string_view>>;
 
 template<typename ParserFunc>
 concept Parser =
-  std::regular_invocable<ParserFunc, std::string_view> && requires(
-    std::invoke_result_t<ParserFunc, std::string_view> res) {
-  std::same_as<decltype(res),
-    parsed_t<typename decltype(res)::value_type::first_type>>;
-};
+  std::regular_invocable<ParserFunc, std::string_view> && std::same_as<
+    std::invoke_result_t<ParserFunc, std::string_view>,
+    parsed_t<typename std::invoke_result_t<ParserFunc,
+      std::string_view>::value_type::first_type>>;
 
 template<Parser P>
 using parser_result_t = typename std::invoke_result_t<P, std::string_view>;
