@@ -39,6 +39,7 @@ auto main() -> int {
   int n = 50000000;
   for (int i = 1; i < n; ++i) { str << '1' << ',' << ' '; }
   str << '1';
+  std::cout << "creating string done...\n";
 
   auto start = std::chrono::high_resolution_clock::now();
   auto const val =
