@@ -28,6 +28,15 @@ concept ParserOf =
   Parser<ParserFunc> && std::same_as<parser_value_t<ParserFunc>, T>;
 
 namespace detail {
+  constexpr auto papply = [](auto &&func, auto &&...args) {
+    if constexpr (std::invocable<decltype(func), decltype(args)...>) {
+      return std::invoke(std::forward<decltype(func)>(func),
+        std::forward<decltype(args)>(args)...);
+    } else {
+      return std::bind_front(std::forward<decltype(func)>(func),
+        std::forward<decltype(args)>(args)...);
+    }
+  };
 
   namespace pipes {
 
@@ -218,6 +227,22 @@ namespace detail {
     };
   }
 
+  template<Parser P1, Parser P2> constexpr auto operator^(P1 &&p1, P2 &&p2) {
+    using result_t = std::
+      invoke_result_t<decltype(papply), parser_value_t<P1>, parser_value_t<P2>>;
+    return [p1 = std::forward<P1>(p1), p2 = std::forward<P2>(p2)](
+             std::string_view str) -> parsed_t<result_t> {
+      if (auto p1_r = std::invoke(p1, str)) {
+        if (auto p2_r = std::invoke(p2, p1_r->second)) {
+          return { { std::invoke(papply, p1_r->first, p2_r->first),
+            p2_r->second } };
+        }
+        return {};
+      }
+      return {};
+    };
+  }
+
 }// namespace detail
 
 template<typename F> constexpr auto piped(F &&f) noexcept {
@@ -369,5 +394,13 @@ template<std::predicate<char> Predicate> constexpr auto many_if(Predicate &&p) {
   using namespace std::string_view_literals;
   return or_with(many1_if(std::forward<Predicate>(p)), always(""sv));
 }
+
+
+// credit: Petter Holmberg
+constexpr auto sequence = [](auto &&f, auto &&...p) {
+  using detail::operator^;
+  return (
+    always(std::forward<decltype(f)>(f)) ^ ... ^ std::forward<decltype(p)>(p));
+};
 
 };// namespace parser
