@@ -227,6 +227,16 @@ namespace detail {
     };
   }
 
+
+  template<Parser P> constexpr auto unconsume_str(P && p) {
+    return
+      [p = std::forward<P>(p)](std::string_view str) -> parser_result_t<P> {
+        auto res = std::invoke(p, str);
+        if (!res) return {};
+        return std::make_pair(res->first, str);
+      };
+  }
+
   template<Parser P1, Parser P2> constexpr auto operator^(P1 &&p1, P2 &&p2) {
     using result_t = std::
       invoke_result_t<decltype(papply), parser_value_t<P1>, parser_value_t<P2>>;
@@ -402,5 +412,9 @@ constexpr auto sequence = [](auto &&f, auto &&...p) {
   return (
     always(std::forward<decltype(f)>(f)) ^ ... ^ std::forward<decltype(p)>(p));
 };
+
+constexpr auto unconsume_str =
+  piped([]<typename P>(P &&p) { return detail::unconsume_str(p); });
+
 
 };// namespace parser
