@@ -3,3 +3,7 @@ build/
 .ccls-cache
 compile_commands.json
 bin/
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
