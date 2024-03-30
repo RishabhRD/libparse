@@ -12,8 +12,8 @@ using parsed_t = std::optional<std::pair<T, std::string_view>>;
 
 template<typename ParserFunc>
 concept Parser =
-  std::regular_invocable<ParserFunc, std::string_view> && std::same_as<
-    std::invoke_result_t<ParserFunc, std::string_view>,
+  std::regular_invocable<ParserFunc, std::string_view>
+  && std::same_as<std::invoke_result_t<ParserFunc, std::string_view>,
     parsed_t<typename std::invoke_result_t<ParserFunc,
       std::string_view>::value_type::first_type>>;
 
@@ -66,7 +66,7 @@ namespace detail {
       constexpr explicit pipeable(F &&f_p) noexcept : f(std::forward<F>(f_p)) {}
 
       template<typename... Xs>
-      requires std::invocable<F, Xs...>
+        requires std::invocable<F, Xs...>
       constexpr auto operator()(Xs &&...xs) const {
         return std::invoke(f, std::forward<Xs>(xs)...);
       }
@@ -79,7 +79,7 @@ namespace detail {
   }// namespace pipes
 
   template<Parser P, std::regular_invocable<parser_value_t<P>> F>
-  auto constexpr transform(P && p, F && f) noexcept {
+  auto constexpr transform(P &&p, F &&f) noexcept {
     using R = parsed_t<std::invoke_result_t<F, parser_value_t<P>>>;
     return [p = std::forward<P>(p), f = std::forward<F>(f)](
              std::string_view str) -> R {
@@ -91,9 +91,8 @@ namespace detail {
   }
 
   template<Parser P1, Parser P2>
-  requires(
-    std::same_as<parser_result_t<P1>, parser_result_t<P2>>) constexpr auto
-    or_with(P1 && p1, P2 && p2) noexcept {
+    requires(std::same_as<parser_result_t<P1>, parser_result_t<P2>>)
+  constexpr auto or_with(P1 &&p1, P2 &&p2) noexcept {
     using R = parser_result_t<P1>;
     return [p1 = std::forward<P1>(p1), p2 = std::forward<P2>(p2)](
              std::string_view str) -> R {
@@ -106,7 +105,7 @@ namespace detail {
   template<Parser P1,
     Parser P2,
     std::regular_invocable<parser_value_t<P1>, parser_value_t<P2>> F>
-  constexpr auto combine(P1 && p1, P2 && p2, F && f) noexcept {
+  constexpr auto combine(P1 &&p1, P2 &&p2, F &&f) noexcept {
     using R =
       parsed_t<std::invoke_result_t<F, parser_value_t<P1>, parser_value_t<P2>>>;
     return [p1 = std::forward<P1>(p1),
@@ -123,21 +122,21 @@ namespace detail {
   }
 
   template<Parser P1, Parser P2>
-  constexpr auto ignore_previous(P1 && p1, P2 && p2) noexcept {
+  constexpr auto ignore_previous(P1 &&p1, P2 &&p2) noexcept {
     return combine(std::forward<P1>(p1),
       std::forward<P2>(p2),
       [](auto, auto r) { return r; });
   }
 
   template<Parser P1, Parser P2>
-  constexpr auto ignore(P1 && p1, P2 && p2) noexcept {
+  constexpr auto ignore(P1 &&p1, P2 &&p2) noexcept {
     return combine(std::forward<P1>(p1),
       std::forward<P2>(p2),
       [](auto r, auto) { return r; });
   }
 
   template<Parser P, std::predicate<parser_value_t<P>> Predicate>
-  constexpr auto if_satisfies(P && p, Predicate && pr) {
+  constexpr auto if_satisfies(P &&p, Predicate &&pr) {
     return [p = std::forward<P>(p), pr = std::forward<Predicate>(pr)](
              std::string_view str) -> parser_result_t<P> {
       if (auto res = std::invoke(p, str)) {
@@ -150,8 +149,8 @@ namespace detail {
   }
 
   template<Parser P, std::regular_invocable<parser_value_t<P>> F>
-  requires(Parser<std::invoke_result_t<F, parser_value_t<P>>>) constexpr auto
-    then(P && p, F && f) {
+    requires(Parser<std::invoke_result_t<F, parser_value_t<P>>>)
+  constexpr auto then(P &&p, F &&f) {
     using R = parser_result_t<std::invoke_result_t<F, parser_value_t<P>>>;
     return [p = std::forward<P>(p), f = std::forward<F>(f)](
              std::string_view str) -> R {
@@ -164,9 +163,8 @@ namespace detail {
 
   // many: Parser a -> b -> (b -> a -> b) -> Parser b
   template<Parser P, typename B, std::invocable<B, parser_value_t<P>> F>
-  requires(std::same_as<std::invoke_result_t<F, B, parser_value_t<P>>,
-    B>) constexpr auto
-    many(P && p, B b, F && f) {
+    requires(std::same_as<std::invoke_result_t<F, B, parser_value_t<P>>, B>)
+  constexpr auto many(P &&p, B b, F &&f) {
     return [p = std::forward<P>(p), b = std::move(b), f = std::forward<F>(f)](
              std::string_view str) -> parsed_t<B> {
       auto init = b;
@@ -180,9 +178,8 @@ namespace detail {
 
   // many1: Parser a -> b -> (b -> a -> b) -> Parser b
   template<Parser P, typename B, std::invocable<B, parser_value_t<P>> F>
-  requires(std::same_as<std::invoke_result_t<F, B, parser_value_t<P>>,
-    B>) constexpr auto
-    many1(P && p, B b, F && f) {
+    requires(std::same_as<std::invoke_result_t<F, B, parser_value_t<P>>, B>)
+  constexpr auto many1(P &&p, B b, F &&f) {
     return [p = std::forward<P>(p), b = std::move(b), f = std::forward<F>(f)](
              std::string_view str) -> parsed_t<B> {
       auto res = std::invoke(p, str);
@@ -192,9 +189,8 @@ namespace detail {
   }
 
   template<Parser P, typename B, std::invocable<B, parser_value_t<P>> F>
-  requires(std::same_as<std::invoke_result_t<F, B, parser_value_t<P>>,
-    B>) constexpr auto
-    exactly_n(P && p, B b, F && f, std::size_t n) {
+    requires(std::same_as<std::invoke_result_t<F, B, parser_value_t<P>>, B>)
+  constexpr auto exactly_n(P &&p, B b, F &&f, std::size_t n) {
     return
       [p = std::forward<P>(p), b = std::move(b), f = std::forward<F>(f), n](
         std::string_view str) -> parsed_t<B> {
@@ -212,9 +208,8 @@ namespace detail {
   }
 
   template<Parser P1, Parser P2, typename B, typename F>
-  requires(std::same_as<std::invoke_result_t<F, B, parser_value_t<P1>>,
-    B>) constexpr auto
-    seperated_by(P1 && p1, P2 && p2, B b, F && f) {
+    requires(std::same_as<std::invoke_result_t<F, B, parser_value_t<P1>>, B>)
+  constexpr auto seperated_by(P1 &&p1, P2 &&p2, B b, F &&f) {
     return [p1 = std::forward<P1>(p1),
              p2 = std::forward<P2>(p2),
              b = std::move(b),
@@ -228,7 +223,7 @@ namespace detail {
   }
 
 
-  template<Parser P> constexpr auto unconsume_str(P && p) {
+  template<Parser P> constexpr auto unconsume_str(P &&p) {
     return
       [p = std::forward<P>(p)](std::string_view str) -> parser_result_t<P> {
         auto res = std::invoke(p, str);
