@@ -489,6 +489,24 @@ static_assert(many1_if(is_c)("ccabc") == std::pair{ "cc"sv, "abc"sv });
 static_assert(many1_if(is_c)("abc") == std::nullopt);
 ```
 
+## parser::many1_if
+
+```cpp
+ sequence = (F f, Parser... p) -> Parser<string_view>
+```
+
+This is an applicative parser. That takes a function that combines the result
+and many parsers that would be executed sequentially. The resut of those
+parsers would be passed to the passed function.
+
+```cpp
+constexpr auto combine_digits(int a, int b){
+  return a * 10 + b;
+}
+
+static_assert(sequence(combine_digits, digit_parser, digit_parser)("12")->first == nullopt);
+```
+
 ## What's next
 
 checkout [cycling_parsing.cpp](examples/cyclic_parsing.cpp) to understand
